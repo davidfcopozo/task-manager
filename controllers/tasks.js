@@ -1,5 +1,6 @@
 const Task = require("../models/task");
 const asyncWrapper = require("../middleware/asyncWrapper");
+const { createCustomError } = require("../errors/custom-error");
 
 const getAllTasks = asyncWrapper(async (req, res) => {
   const tasks = await Task.find({});
@@ -20,12 +21,12 @@ const getTask = asyncWrapper(async (req, res) => {
   //taskId is the alias for id
   const { id: taskID } = req.params;
   const task = await Task.findOne({ _id: taskID });
+
   if (!task) {
-    return res.status(404).json({ msg: `No task with ID: ${taskID}` });
+    //If there is no task, pass to createCustomError() function (that creates an instance of CustomAPIError class we created in the custom-error file) to the express next() middleware with the two parameters it takes (message, statusCode)
+    return next(createCustomError(`No task with ID: ${taskID}`, 404));
   }
   res.status(200).json({ task });
-
-  res.status(404).json({ msg: error });
 });
 
 const updateTask = asyncWrapper(async (req, res) => {
@@ -37,11 +38,9 @@ const updateTask = asyncWrapper(async (req, res) => {
     runValidators: true,
   });
   if (!task) {
-    return res.status(404).json({ msg: `No task with ID: ${taskID}` });
+    return next(createCustomError(`No task with ID: ${taskID}`, 404));
   }
   res.status(200).json({ task });
-
-  res.status(404).json({ msg: error });
 });
 
 const deleteTask = asyncWrapper(async (req, res) => {
@@ -50,12 +49,10 @@ const deleteTask = asyncWrapper(async (req, res) => {
   const task = await Task.findOneAndDelete({ _id: taskID });
 
   if (!task) {
-    return res.status(404).json({ msg: `No task with ID: ${taskID}` });
+    return next(createCustomError(`No task with ID: ${taskID}`, 404));
   }
 
   res.status(200).json({ task });
-
-  res.status(404).json({ msg: error });
 });
 
 module.exports = {
